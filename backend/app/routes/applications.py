@@ -3,7 +3,7 @@ Applications API routes.
 """
 
 from typing import Any, List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, Query
 
 from app.auth.dependencies import get_current_active_user
 from app.models.user import User
@@ -60,6 +60,7 @@ async def list_applications(
 @router.post("/", response_model=Application)
 async def create_new_application(
     app_data: ApplicationCreate,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_active_user)
 ) -> Any:
     """
@@ -83,11 +84,17 @@ async def create_new_application(
         
         await deployment_service.create_deployment(DeploymentCreate(
             application_id=str(application.id),
-            status="in_progress",
+            status="queued",
             trigger_type="manual",
             branch=app_data.github_branch or "main",
             commit_message="Initial deployment from DockSphere"
         ))
+
+        background_tasks.add_task(
+            deployment_service.run_deployment_pipeline,
+            str(application.id),
+            app_data.github_repo_url,
+        )
         
         return application
 

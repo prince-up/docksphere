@@ -85,23 +85,39 @@ export default function NewProject() {
     setLoading(true);
     
     try {
-      const name = (e.currentTarget as any).appName.value;
-      const repo = (e.currentTarget as any).repoUrl.value;
+      const form = e.currentTarget as HTMLFormElement;
+      const rawName = (form.elements.namedItem('appName') as HTMLInputElement).value;
+      const repo = (form.elements.namedItem('repoUrl') as HTMLInputElement).value;
+      const name = rawName
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9-]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 50);
+
+      if (!name) {
+        toast.error('Project name must contain letters or numbers.');
+        setLoading(false);
+        return;
+      }
+
+      if (!repo || !repo.includes('github.com/')) {
+        toast.error('Please select a valid GitHub repository.');
+        setLoading(false);
+        return;
+      }
       
       const response = await post(apiEndpoints.apps.create, {
         name,
         github_repo_url: repo,
-        config: {
-          runtime: 'docker',
-          build_command: 'npm run build',
-          start_command: 'npm start',
-        }
+        github_branch: 'main',
       });
       
       toast.success('Project created!');
       router.push(`/apps/${response.data.id}`);
-    } catch (error) {
-       toast.error('Failed to create project.');
+    } catch (error: any) {
+       const detail = error?.response?.data?.detail;
+       toast.error(typeof detail === 'string' ? detail : 'Failed to create project.');
     } finally {
       setLoading(false);
     }
@@ -253,7 +269,7 @@ export default function NewProject() {
                     </div>
 
                     <div className="hidden">
-                      <input name="repoUrl" value="https://github.com/user/my-awesome-service" readOnly />
+                      <input name="repoUrl" value="https://github.com/prince-up/Kuberxflow.git" readOnly />
                     </div>
 
                     <div className="flex items-center justify-between pt-8">

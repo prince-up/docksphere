@@ -5,7 +5,7 @@ Uses Pydantic settings for environment variable management.
 
 import secrets
 from typing import List, Optional, Union
-from pydantic import AnyHttpUrl, field_validator, ValidationInfo
+from pydantic import AnyHttpUrl, AliasChoices, Field, field_validator, ValidationInfo
 from pydantic_settings import BaseSettings
 
 
@@ -22,12 +22,15 @@ class Settings(BaseSettings):
     # Server Configuration
     SERVER_NAME: str = "DockSphere"
     SERVER_HOST: AnyHttpUrl = "http://localhost"
-    PORT: int = 8000
+    PORT: int = Field(default=8000, validation_alias=AliasChoices("PORT", "APP_PORT"))
     DEBUG: bool = True
-    ENVIRONMENT: str = "development"
+    ENVIRONMENT: str = Field(default="development", validation_alias=AliasChoices("ENVIRONMENT", "APP_ENV"))
 
     # CORS Configuration
-    BACKEND_CORS_ORIGINS: List[str] = ["*"]
+    BACKEND_CORS_ORIGINS: List[str] = Field(
+        default=["*"],
+        validation_alias=AliasChoices("BACKEND_CORS_ORIGINS", "CORS_ORIGINS")
+    )
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod
@@ -69,6 +72,9 @@ class Settings(BaseSettings):
     # Supabase Configuration
     SUPABASE_URL: str = "https://viorcyptkasjylompjsa.supabase.co"
     SUPABASE_JWT_SECRET: str = ""  # Set in .env: Supabase Dashboard → Settings → API → JWT Secret
+
+    # Frontend Configuration
+    FRONTEND_URL: str = "http://localhost:3000"
 
     # JWT Configuration
     JWT_SECRET_KEY: str = secrets.token_urlsafe(32)
@@ -141,6 +147,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"
 
 
 # Create global settings instance
