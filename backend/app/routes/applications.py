@@ -2,6 +2,7 @@
 Applications API routes.
 """
 
+from datetime import datetime
 from typing import Any, List, Optional
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, Query
 
@@ -84,6 +85,7 @@ async def create_new_application(
         
         await deployment_service.create_deployment(DeploymentCreate(
             application_id=str(application.id),
+            deployment_id=f"deploy_{application.id}_{int(datetime.utcnow().timestamp())}",
             status="queued",
             trigger_type="manual",
             branch=app_data.github_branch or "main",

@@ -76,7 +76,7 @@ class ApplicationUpdate(BaseModel):
 class ApplicationInDB(ApplicationBase):
     """Application model as stored in database."""
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
-    owner_id: PyObjectId
+    owner_id: str
     github_repo_name: str
     github_repo_owner: str
     github_webhook_id: Optional[str] = None

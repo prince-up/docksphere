@@ -32,7 +32,7 @@ class ApplicationService:
         collection = self._collection()
 
         existing_app = await collection.find_one({
-            "owner_id": ObjectId(owner_id),
+            "owner_id": owner_id,
             "name": app_data.name
         })
 
@@ -41,7 +41,7 @@ class ApplicationService:
 
         # Create application document
         app_doc = ApplicationInDB(
-            owner_id=ObjectId(owner_id),
+            owner_id=owner_id,
             name=app_data.name,
             description=app_data.description,
             github_repo_url=app_data.github_repo_url,
@@ -75,7 +75,7 @@ class ApplicationService:
     async def get_application_by_name(self, owner_id: str, name: str) -> Optional[Application]:
         """Get application by name and owner."""
         app_doc = await self._collection().find_one({
-            "owner_id": ObjectId(owner_id),
+            "owner_id": owner_id,
             "name": name
         })
         return Application(**app_doc) if app_doc else None
@@ -83,7 +83,7 @@ class ApplicationService:
     async def get_user_applications(self, owner_id: str, skip: int = 0, limit: int = 50) -> List[ApplicationList]:
         """Get applications for a user."""
         cursor = self._collection().find(
-            {"owner_id": ObjectId(owner_id)}
+            {"owner_id": owner_id}
         ).skip(skip).limit(limit).sort("created_at", -1)
 
         applications = []
@@ -203,7 +203,7 @@ class ApplicationService:
 
     async def count_user_applications(self, owner_id: str) -> int:
         """Count applications for a user."""
-        return await self._collection().count_documents({"owner_id": ObjectId(owner_id)})
+        return await self._collection().count_documents({"owner_id": owner_id})
 
     async def get_applications_by_status(self, status: str, skip: int = 0, limit: int = 50) -> List[Application]:
         """Get applications by status."""
