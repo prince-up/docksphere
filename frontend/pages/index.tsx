@@ -16,10 +16,14 @@ import {
   Box,
   Layers
 } from 'lucide-react';
+import { useRouter } from 'next/router';
+import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
 export default function Landing() {
   const [mounted, setMounted] = React.useState(false);
+   const { user, isAuthenticated, logout } = useAuth();
+   const router = useRouter();
 
   React.useEffect(() => {
     setMounted(true);
@@ -46,10 +50,33 @@ export default function Landing() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-             <Link href="/login" className="text-[14px] font-bold text-zinc-400 hover:text-white transition-all px-4">Log in</Link>
-             <Link href="/signup" className="px-6 py-2 bg-white text-black text-[14px] font-black rounded-lg hover:bg-zinc-200 transition-all shadow-xl shadow-white/5">
-                Sign Up
-             </Link>
+                  {isAuthenticated ? (
+                     <div className="flex items-center gap-3">
+                        <div className="hidden sm:flex flex-col items-end leading-tight">
+                           <span className="text-[11px] font-black uppercase tracking-[0.22em] text-emerald-400">Signed in</span>
+                           <span className="text-[13px] font-bold text-white">{user?.username || 'User'}</span>
+                        </div>
+                        <Link href="/dashboard" className="px-5 py-2 bg-white text-black text-[14px] font-black rounded-lg hover:bg-zinc-200 transition-all shadow-xl shadow-white/5">
+                           Dashboard
+                        </Link>
+                        <button
+                           onClick={async () => {
+                              await logout();
+                              router.push('/');
+                           }}
+                           className="text-[14px] font-bold text-zinc-400 hover:text-white transition-all px-2"
+                        >
+                           Sign out
+                        </button>
+                     </div>
+                  ) : (
+                     <>
+                        <Link href="/login" className="text-[14px] font-bold text-zinc-400 hover:text-white transition-all px-4">Log in</Link>
+                        <Link href="/signup" className="px-6 py-2 bg-white text-black text-[14px] font-black rounded-lg hover:bg-zinc-200 transition-all shadow-xl shadow-white/5">
+                              Sign Up
+                        </Link>
+                     </>
+                  )}
           </div>
         </div>
       </nav>
@@ -60,6 +87,18 @@ export default function Landing() {
          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[1200px] h-[600px] bg-indigo-500/10 blur-[120px] rounded-full pointer-events-none" />
          
          <div className="max-w-5xl mx-auto text-center space-y-12 relative z-10">
+                  {isAuthenticated && (
+                     <div className="inline-flex items-center gap-3 px-4 py-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-left">
+                        <div className="h-10 w-10 rounded-xl bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center">
+                           <span className="text-emerald-400 font-black text-sm">{user?.username?.charAt(0).toUpperCase() || 'U'}</span>
+                        </div>
+                        <div>
+                           <p className="text-[11px] font-black uppercase tracking-[0.22em] text-emerald-400">Logged in</p>
+                           <p className="text-[14px] font-bold text-white">{user?.email || user?.username || 'Active session'}</p>
+                        </div>
+                     </div>
+                  )}
+
             <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-zinc-900/50 border border-zinc-800 rounded-full text-[12px] font-black uppercase tracking-[0.2em] text-indigo-400 animate-in fade-in slide-in-from-top-4 duration-700">
                <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
@@ -79,11 +118,19 @@ export default function Landing() {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-8 animate-in fade-in zoom-in duration-1000 delay-500">
-               <Link href="/signup">
-                  <button className="px-10 py-4 bg-white text-black text-lg font-black rounded-xl hover:bg-zinc-200 transition-all shadow-2xl shadow-white/5 flex items-center gap-3 group">
-                     Start Deploying <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                  </button>
-               </Link>
+               {isAuthenticated ? (
+                 <Link href="/dashboard">
+                    <button className="px-10 py-4 bg-white text-black text-lg font-black rounded-xl hover:bg-zinc-200 transition-all shadow-2xl shadow-white/5 flex items-center gap-3 group">
+                       Open Dashboard <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                    </button>
+                 </Link>
+               ) : (
+                 <Link href="/signup">
+                    <button className="px-10 py-4 bg-white text-black text-lg font-black rounded-xl hover:bg-zinc-200 transition-all shadow-2xl shadow-white/5 flex items-center gap-3 group">
+                       Start Deploying <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                    </button>
+                 </Link>
+               )}
                <button className="px-10 py-4 bg-zinc-900/50 border border-zinc-800 text-lg font-black rounded-xl hover:bg-zinc-900 transition-all flex items-center gap-3">
                   Read Documentation
                </button>

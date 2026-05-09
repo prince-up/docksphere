@@ -75,6 +75,20 @@ async def create_new_application(
             )
 
         application = await create_application(str(current_user.id), app_data)
+        
+        # Trigger immediate simulated deployment
+        # In production, this would be an async task (Celery/BackgroundTasks)
+        from app.services.deployment_service import deployment_service
+        from app.models.deployment import DeploymentCreate
+        
+        await deployment_service.create_deployment(DeploymentCreate(
+            application_id=str(application.id),
+            status="in_progress",
+            trigger_type="manual",
+            branch=app_data.github_branch or "main",
+            commit_message="Initial deployment from DockSphere"
+        ))
+        
         return application
 
     except ValueError as e:

@@ -254,7 +254,60 @@ class DeploymentService:
         return stats
 
 
-# Global deployment service instance
+    async def run_deployment_pipeline(self, app_id: str, repo_url: str):
+        """
+        THE HEART OF DOCKSPHERE: The automated deployment pipeline.
+        This handles everything from code to live container.
+        """
+        from app.services.builder_service import builder_service
+        from app.services.container_service import container_manager
+        from app.services.application_service import application_service
+        
+        try:
+            # Step 1: Prepare Source
+            await application_service.add_build_log(app_id, "INFO", "🚀 Starting deployment pipeline...")
+            path = await builder_service.prepare_source(repo_url, app_id)
+            await application_service.add_build_log(app_id, "INFO", "✅ Code cloned successfully.")
+
+            # Step 2: Detect & Configure
+            project_type = builder_service.detect_project_type(path)
+            builder_service.ensure_dockerfile(path, project_type)
+            await application_service.add_build_log(app_id, "INFO", f"📦 Detected {project_type} environment. Configuration ready.")
+
+            # Step 3: Build Docker Image
+            image_tag = f"docksphere-app-{app_id}:latest"
+            await application_service.add_build_log(app_id, "INFO", "🛠️ Building Docker image (this may take a minute)...")
+            image_id = await container_manager.build_image(path, image_tag)
+            await application_service.add_build_log(app_id, "INFO", f"✅ Image built: {image_id[:12]}")
+
+            # Step 4: Run Container
+            # Logic: Use a dynamic port (for now 8001+, but in prod we'd track allocation)
+            port = 8000 + (hash(app_id) % 1000) 
+            container_info = await container_manager.run_container(
+                image_tag=image_tag,
+                name=f"docksphere-{app_id}",
+                env_vars={"NODE_ENV": "production", "PORT": "80"},
+                port=port
+            )
+            
+            # Step 5: Update App Meta
+            await application_service.update_application_status(app_id, "Running", "Success")
+            await application_service.update_deployment_info(
+                app_id, 
+                container_id=container_info["container_id"],
+                exposed_port=port,
+                docker_image=image_tag
+            )
+            await application_service.set_last_deployment(app_id)
+            await application_service.add_build_log(app_id, "INFO", f"🚀 APP IS LIVE at port {port}")
+
+        except Exception as e:
+            logger.error(f"Pipeline failed for {app_id}: {e}")
+            await application_service.add_build_log(app_id, "ERROR", f"❌ Deployment failed: {str(e)}")
+            await application_service.update_application_status(app_id, "Error", "Failed")
+
+
+# Global singleton instance — imported by other services
 deployment_service = DeploymentService()
 
 

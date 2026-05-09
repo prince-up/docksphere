@@ -66,6 +66,10 @@ class Settings(BaseSettings):
     GITHUB_WEBHOOK_SECRET: str = secrets.token_urlsafe(32)
     GITHUB_API_BASE_URL: str = "https://api.github.com"
 
+    # Supabase Configuration
+    SUPABASE_URL: str = "https://viorcyptkasjylompjsa.supabase.co"
+    SUPABASE_JWT_SECRET: str = ""  # Set in .env: Supabase Dashboard → Settings → API → JWT Secret
+
     # JWT Configuration
     JWT_SECRET_KEY: str = secrets.token_urlsafe(32)
     JWT_ALGORITHM: str = "HS256"

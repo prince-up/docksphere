@@ -20,6 +20,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
@@ -30,6 +31,7 @@ export default function NewProject() {
   const [step, setStep] = useState(1); // 1: Select Repo, 2: Configure
   const [repos, setRepos] = useState<any[]>([]);
   const [fetchingRepos, setFetchingRepos] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
