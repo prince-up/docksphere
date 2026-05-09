@@ -76,6 +76,10 @@ class Settings(BaseSettings):
     # Frontend Configuration
     FRONTEND_URL: str = "http://localhost:3000"
 
+    # Public Deployment URL used for live app links.
+    # Point this at your tunnel or public server base URL in production.
+    PUBLIC_APP_BASE_URL: str = "http://localhost:8000"
+
     # JWT Configuration
     JWT_SECRET_KEY: str = secrets.token_urlsafe(32)
     JWT_ALGORITHM: str = "HS256"

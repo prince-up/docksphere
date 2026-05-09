@@ -8,6 +8,7 @@ from motor.motor_asyncio import AsyncIOMotorCollection
 from bson import ObjectId
 
 from app.core.database import get_collection
+from app.core.config import settings
 from app.models.deployment import (
     Deployment, DeploymentCreate, DeploymentInDB, DeploymentList,
     GitHubWebhook, BuildLog, DeploymentLog
@@ -296,7 +297,8 @@ class DeploymentService:
                 app_id, 
                 container_id=container_info["container_id"],
                 exposed_port=port,
-                docker_image=image_tag
+                docker_image=image_tag,
+                public_url=f"{settings.PUBLIC_APP_BASE_URL.rstrip('/')}/live/{app_id}"
             )
             await application_service.set_last_deployment(app_id)
             await application_service.add_build_log(app_id, "INFO", f"🚀 APP IS LIVE at port {port}")

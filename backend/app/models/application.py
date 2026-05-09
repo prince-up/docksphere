@@ -88,6 +88,7 @@ class ApplicationInDB(ApplicationBase):
     exposed_port: Optional[int] = None
     domain: Optional[str] = None
     subdomain: Optional[str] = None
+    public_url: Optional[str] = None
     status: str = Field(default="created", enum=["created", "building", "running", "stopped", "failed"])
     build_status: str = Field(default="pending", enum=["pending", "building", "success", "failed"])
     last_deployment: Optional[datetime] = None

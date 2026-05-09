@@ -19,6 +19,7 @@ interface App {
   created_at: string;
   last_deployment?: string;
   domain?: string;
+  public_url?: string;
   exposed_port?: number;
   build_logs?: Array<{ level: string; message: string; timestamp: string }>;
 }
@@ -101,8 +102,8 @@ export default function AppDetail() {
   };
 
   const copyUrl = () => {
-    const url = app?.domain || `localhost:${app?.exposed_port}`;
-    navigator.clipboard.writeText(`https://${url}`);
+    const url = app?.public_url || (app?.domain ? `https://${app.domain}` : app?.exposed_port ? `http://localhost:${app.exposed_port}` : '');
+    navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -129,7 +130,7 @@ export default function AppDetail() {
 
   const status = STATUS_CONFIG[app.status] || STATUS_CONFIG.Stopped;
   const StatusIcon = status.icon;
-  const liveUrl = app.domain ? `https://${app.domain}` : app.exposed_port ? `http://localhost:${app.exposed_port}` : null;
+  const liveUrl = app.public_url || (app.domain ? `https://${app.domain}` : app.exposed_port ? `http://localhost:${app.exposed_port}` : null);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">

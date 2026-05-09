@@ -5,10 +5,11 @@ A production-ready DevOps hosting platform API built with FastAPI.
 
 import asyncio
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request
+import httpx
+from fastapi import FastAPI, Request, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 import logging
 import time
 
@@ -245,6 +246,55 @@ def create_application() -> FastAPI:
                 "message": "Backend API is running",
                 "version": "1.0.0"
             }
+
+    @app.api_route("/live/{app_id}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"])
+    @app.api_route("/live/{app_id}/{full_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"])
+    async def proxy_live_app(request: Request, app_id: str, full_path: str = ""):
+        """
+        Public live URL for a deployed application.
+        Requests are proxied to the local container port assigned during deployment.
+        """
+        try:
+            from app.services.application_service import get_application_by_id
+            application = await get_application_by_id(app_id)
+        except Exception as exc:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Application not found") from exc
+
+        if not application or not application.exposed_port:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Application not available")
+
+        upstream_url = f"http://127.0.0.1:{application.exposed_port}"
+        if full_path:
+            upstream_url = f"{upstream_url}/{full_path}"
+        if request.url.query:
+            upstream_url = f"{upstream_url}?{request.url.query}"
+
+        excluded_headers = {"host", "content-length", "connection", "accept-encoding"}
+        headers = {key: value for key, value in request.headers.items() if key.lower() not in excluded_headers}
+
+        try:
+            async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
+                upstream_response = await client.request(
+                    request.method,
+                    upstream_url,
+                    content=await request.body(),
+                    headers=headers,
+                )
+        except httpx.RequestError as exc:
+            raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=f"Proxy error: {exc}") from exc
+
+        response_headers = {
+            key: value
+            for key, value in upstream_response.headers.items()
+            if key.lower() not in {"content-length", "transfer-encoding", "connection", "content-encoding"}
+        }
+
+        return Response(
+            content=upstream_response.content,
+            status_code=upstream_response.status_code,
+            headers=response_headers,
+            media_type=upstream_response.headers.get("content-type"),
+        )
 
     return app
 

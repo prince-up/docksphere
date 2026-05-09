@@ -4,7 +4,6 @@ Application service for database operations.
 
 from datetime import datetime
 from typing import Optional, List, Dict, Any
-from motor.motor_asyncio import AsyncIOMotorCollection
 from bson import ObjectId
 
 from app.core.database import get_collection
@@ -18,9 +17,9 @@ class ApplicationService:
     """Service for application-related database operations."""
 
     def __init__(self):
-        self.collection: AsyncIOMotorCollection = None
+        self.collection: Any = None
 
-    def _collection(self) -> AsyncIOMotorCollection:
+    def _collection(self) -> Any:
         return get_collection("applications")
 
     async def create_application(self, owner_id: str, app_data: ApplicationCreate) -> Application:
@@ -134,7 +133,7 @@ class ApplicationService:
         return result.modified_count > 0
 
     async def update_deployment_info(self, app_id: str, container_id: str = None, container_name: str = None,
-                                   exposed_port: int = None, docker_image: str = None) -> bool:
+                                   exposed_port: int = None, docker_image: str = None, public_url: str = None) -> bool:
         """Update deployment information."""
         update_dict = {"updated_at": datetime.utcnow()}
 
@@ -146,6 +145,8 @@ class ApplicationService:
             update_dict["exposed_port"] = exposed_port
         if docker_image:
             update_dict["docker_image"] = docker_image
+        if public_url:
+            update_dict["public_url"] = public_url
 
         result = await self._collection().update_one(
             {"_id": ObjectId(app_id)},

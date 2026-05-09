@@ -114,7 +114,8 @@ export default function NewProject() {
       });
       
       toast.success('Project created!');
-      router.push(`/apps/${response.data.id}`);
+      const projectId = response.data?.id || response.data?._id;
+      router.push(`/apps/${projectId}`);
     } catch (error: any) {
        const detail = error?.response?.data?.detail;
        toast.error(typeof detail === 'string' ? detail : 'Failed to create project.');
